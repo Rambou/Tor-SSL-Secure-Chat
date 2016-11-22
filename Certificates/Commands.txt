@@ -1,0 +1,18 @@
+#Generate Aegean CA.
+openssl req -new -passout pass:aegean -x509 -extensions v3_ca -keyout CA_private.pem -out CA_certificate.pem -config ca.conf
+#Export Aegean CA certificate to keytool.
+keytool -importcert -file CA_certificate.pem -keystore CA_Keystore.jks -alias CA_certificate -storepass aegean
+
+#Generate Client/Server Sign Requests.
+openssl req -new -passout pass:aegean -nodes -out Client_request.pem -keyout Client_private.pem -config ca.conf
+openssl req -new -passout pass:aegean -nodes -out Server_request.pem -keyout Server_private.pem -config ca.conf
+
+#Generate Client/Server Certificates.
+openssl ca -extensions v3_req -passin pass:aegean -out Client_certificate.pem -config ca.conf -in Client_request.pem
+openssl ca -extensions v3_req -passin pass:aegean -out Server_certificate.pem -config ca.conf -in Server_request.pem
+
+#Export  Client/Server certificate to keytool.
+openssl pkcs12 -export -in Client_certificate.pem -inkey Client_private.pem -passin pass:aegean -passout pass:aegean > Client_certificate.p12
+openssl pkcs12 -export -in Server_certificate.pem -inkey Server_private.pem -passin pass:aegean -passout pass:aegean > Server_certificate.p12
+keytool -importkeystore -srckeystore Client_certificate.p12 -srcstoretype pkcs12 -destkeystore Client_Keystore.jks -deststorepass aegean -srcstorepass aegean
+keytool -importkeystore -srckeystore Server_certificate.p12 -srcstoretype pkcs12 -destkeystore Server_Keystore.jks -deststorepass aegean -srcstorepass aegean
